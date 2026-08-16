@@ -3,8 +3,8 @@ import { authHeaders, useAuthStore } from './useAuthStore';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
-type LayerLevel = 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
-type ProjectStatus = 'Draft' | 'Planned' | 'In Progress' | 'Locked' | 'Clash Detected' | 'Completed';
+export type LayerLevel = 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
+export type ProjectStatus = 'Draft' | 'Planned' | 'In Progress' | 'Locked' | 'Clash Detected' | 'Completed';
 
 export interface Project {
   id: string;

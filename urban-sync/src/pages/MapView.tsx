@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Map, { Source, Layer } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Layers, Settings2, Play, Pause, Clock } from 'lucide-react';
+import { Layers, Settings2, Play, Pause } from 'lucide-react';
 import { useProjectStore } from '../store/useProjectStore';
 
 export default function MapView() {

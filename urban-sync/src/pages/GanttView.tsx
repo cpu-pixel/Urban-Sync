@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { CalendarClock, Filter, AlertTriangle, ArrowRight } from 'lucide-react';
 import { useProjectStore } from '../store/useProjectStore';
-import type { Project } from '../store/useProjectStore';
 import { Link } from 'react-router-dom';
 
 export default function GanttView() {
@@ -9,7 +8,7 @@ export default function GanttView() {
   const [sortBy, setSortBy] = useState<'startDate' | 'layer'>('startDate');
 
   // --- DATE MATH ENGINE ---
-  const { minDate, maxDate, totalDays, months } = useMemo(() => {
+  const { minDate, totalDays, months } = useMemo(() => {
     const dates = projects.flatMap(p => [new Date(p.startDate).getTime(), new Date(p.endDate).getTime()]);
     
     // Pad timeline by 1 month on start and end for breathing room
@@ -114,7 +113,7 @@ export default function GanttView() {
           
           {/* Months Header row */}
           <div className="h-12 border-b border-slate-200 flex relative bg-slate-100">
-            {months.map((m, i) => (
+            {months.map((m) => (
               <div 
                 key={m} 
                 className="flex-1 border-r border-slate-200 border-dashed flex items-center px-2 text-xs font-bold text-slate-500 uppercase"
@@ -129,7 +128,7 @@ export default function GanttView() {
             
             {/* Background Grid Lines */}
             <div className="absolute inset-0 flex pointer-events-none">
-              {months.map((m, i) => (
+              {months.map((_, i) => (
                 <div key={`grid-${i}`} className="flex-1 border-r border-slate-200 border-dashed h-full" />
               ))}
             </div>

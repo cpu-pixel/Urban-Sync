@@ -33,11 +33,13 @@ export default function Projects() {
 
   // Status Badge Component
   const StatusBadge = ({ status }: { status: ProjectStatus }) => {
-    const config = {
-      'In Progress': { color: 'text-blue-700 bg-blue-100 border-blue-200', icon: Clock },
+    const config: Record<ProjectStatus, { color: string; icon: any }> = {
+      'Draft': { color: 'text-slate-500 bg-slate-50 border-slate-200', icon: Clock },
       'Planned': { color: 'text-slate-700 bg-slate-100 border-slate-200', icon: CheckCircle2 },
+      'In Progress': { color: 'text-blue-700 bg-blue-100 border-blue-200', icon: Clock },
       'Clash Detected': { color: 'text-red-700 bg-red-100 border-red-200', icon: AlertTriangle },
       'Locked': { color: 'text-amber-700 bg-amber-100 border-amber-200', icon: Lock },
+      'Completed': { color: 'text-emerald-700 bg-emerald-100 border-emerald-200', icon: CheckCircle2 },
     };
     const Icon = config[status].icon;
     
