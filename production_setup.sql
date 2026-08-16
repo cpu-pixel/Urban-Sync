@@ -1,3 +1,5 @@
+-- =============== SCHEMA ===============
+
 -- 1. Enable Extensions
 CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -184,7 +186,11 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER after_geometry_insert_or_update
 AFTER INSERT OR UPDATE OF geom ON project_geometries
 FOR EACH ROW
-EXECUTE FUNCTION trigger_check_4d_clash();-- Migration: Add multi-tenant user authentication
+EXECUTE FUNCTION trigger_check_4d_clash();
+
+-- =============== AUTH SCHEMA ===============
+
+-- Migration: Add multi-tenant user authentication
 -- Run: docker exec -i urban-sync-db psql -U postgres -d urbansync < migration_auth.sql
 
 -- 1. User Role Enum
@@ -204,7 +210,22 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
 CREATE INDEX IF NOT EXISTS idx_users_org ON users (organization_id);
 
+
+
+-- =============== SEED ORGS ===============
+
+-- 1. Insert Organizations
+INSERT INTO organizations (id, name, type, contact_email) VALUES
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Water Supply & Sewerage Board', 'PUBLIC_UTILITY', 'ops@waterboard.gov'),
+('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', 'Telecom Infrastructure Corp', 'PRIVATE_TELECOM', 'build@telecominfra.com'),
+('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', 'Public Works Department', 'MUNICIPAL', 'roads@pwd.gov');
+
+
+
+-- =============== SEED USERS ===============
+
 -- 3. Seed one demo user per organization
+
 -- All passwords are 'password123', hashed with bcrypt (10 rounds)
 -- Hash generated via: node -e "require('bcrypt').hash('password123',10).then(console.log)"
 INSERT INTO users (organization_id, email, password_hash, name, role) VALUES
@@ -230,13 +251,12 @@ INSERT INTO users (organization_id, email, password_hash, name, role) VALUES
   'PLANNER'
 )
 ON CONFLICT (email) DO NOTHING;
--- 1. Insert Organizations
-INSERT INTO organizations (id, name, type, contact_email) VALUES
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Water Supply & Sewerage Board', 'PUBLIC_UTILITY', 'ops@waterboard.gov'),
-('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', 'Telecom Infrastructure Corp', 'PRIVATE_TELECOM', 'build@telecominfra.com'),
-('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', 'Public Works Department', 'MUNICIPAL', 'roads@pwd.gov');
+
+
+-- =============== SEED PROJECTS ===============
 
 -- 2. Insert Projects
+
 INSERT INTO projects (id, organization_id, title, description, utility_layer, status, budget_allocated, budget_spent, start_date, end_date) VALUES
 ('PRJ-2026-089', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'North Corridor Trunk Main Upgrade', 'Deep sewer trunk replacement.', 'L1_DEEP_SEWER', 'PLANNED', 4200000.00, 1344000.00, '2026-10-01', '2027-03-15'),
 ('PRJ-2026-104', 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', 'Downtown Fiber Backbone', 'High-density fiber optic conduit.', 'L3_DRY_UTILITY', 'PLANNED', 850000.00, 0.00, '2026-11-01', '2027-01-15'),
