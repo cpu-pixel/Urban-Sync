@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-const API = 'http://localhost:5001';
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 export interface AuthUser {
   id: string;

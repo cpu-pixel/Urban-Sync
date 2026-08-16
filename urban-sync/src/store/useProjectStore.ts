@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { authHeaders, useAuthStore } from './useAuthStore';
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
 type LayerLevel = 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
 type ProjectStatus = 'Draft' | 'Planned' | 'In Progress' | 'Locked' | 'Clash Detected' | 'Completed';
 
@@ -52,7 +54,7 @@ export const useProjectStore = create<ProjectStore>((set) => ({
   // Fetch from backend — token-scoped to user's org
   fetchProjects: async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/projects', {
+      const response = await fetch(`${API}/api/projects`, {
         headers: { ...authHeaders() },
       });
       if (response.status === 401) {
@@ -70,7 +72,7 @@ export const useProjectStore = create<ProjectStore>((set) => ({
   // Post to backend — org is derived from the JWT server-side
   addProject: async (project) => {
     try {
-      const response = await fetch('http://localhost:5001/api/projects', {
+      const response = await fetch(`${API}/api/projects`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify(project),
