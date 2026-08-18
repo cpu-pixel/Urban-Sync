@@ -1,17 +1,21 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Info, Map as MapIcon, GitMerge, AlertTriangle, 
-  Calendar, CheckCircle2, Building2, Wallet, HardHat 
+  Calendar, CheckCircle2, Building2, Wallet, HardHat, Trash2
 } from 'lucide-react';
 import { useProjectStore } from '../store/useProjectStore';
+import ProjectEditModal from '../components/ProjectEditModal';
 
 type Tab = 'overview' | 'map' | 'timeline' | 'conflicts';
 
 export default function ProjectDetails() {
   const { id } = useParams();
-  const { projects } = useProjectStore();
+  const navigate = useNavigate();
+  const { projects, updateProject, deleteProject } = useProjectStore();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Find current project
   const project = projects.find(p => p.id === id);
@@ -63,8 +67,17 @@ export default function ProjectDetails() {
           </div>
           
           <div className="flex gap-2">
-            <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 text-sm font-semibold shadow-sm transition-all">
+            <button 
+              onClick={() => setIsEditModalOpen(true)}
+              className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 text-sm font-semibold shadow-sm transition-all"
+            >
               Edit Project
+            </button>
+            <button 
+              onClick={() => setIsDeleteDialogOpen(true)}
+              className="px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 text-sm font-semibold shadow-sm transition-all flex items-center gap-2"
+            >
+              <Trash2 size={16} /> Delete
             </button>
             <button className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-blue-700 text-sm font-semibold shadow-sm transition-all">
               Request Approval
@@ -263,6 +276,47 @@ export default function ProjectDetails() {
         )}
 
       </div>
+
+      {/* Edit Modal */}
+      {isEditModalOpen && project && (
+        <ProjectEditModal 
+          project={project} 
+          onClose={() => setIsEditModalOpen(false)} 
+          onSave={updateProject} 
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteDialogOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden p-6 text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle size={32} className="text-red-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">Delete Project?</h2>
+            <p className="text-slate-500 mb-6">
+              Are you sure you want to delete <strong>{project.title}</strong>? This action cannot be undone and will permanently remove all associated spatial geometries and dependencies.
+            </p>
+            <div className="flex justify-center gap-3">
+              <button 
+                onClick={() => setIsDeleteDialogOpen(false)}
+                className="px-6 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={async () => {
+                  await deleteProject(project.id);
+                  navigate('/dashboard');
+                }}
+                className="px-6 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

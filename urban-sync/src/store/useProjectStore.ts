@@ -40,6 +40,8 @@ interface ProjectStore {
   removeAlert: (id: string) => void;
   fetchProjects: () => Promise<void>; // <-- NEW API Call
   addProject: (project: Project) => Promise<void>; // <-- Update to async API call
+  updateProject: (id: string, projectData: Partial<Project>) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
 }
 
 export const useProjectStore = create<ProjectStore>((set) => ({
@@ -88,6 +90,45 @@ export const useProjectStore = create<ProjectStore>((set) => ({
       await useProjectStore.getState().fetchProjects();
     } catch (error) {
       console.error('Failed to add project:', error);
+    }
+  },
+
+  updateProject: async (id, projectData) => {
+    try {
+      const response = await fetch(`${API}/api/projects/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify(projectData),
+      });
+
+      if (response.status === 401) {
+        useAuthStore.getState().logout();
+        window.location.href = '/login';
+        return;
+      }
+
+      await useProjectStore.getState().fetchProjects();
+    } catch (error) {
+      console.error('Failed to update project:', error);
+    }
+  },
+
+  deleteProject: async (id) => {
+    try {
+      const response = await fetch(`${API}/api/projects/${id}`, {
+        method: 'DELETE',
+        headers: { ...authHeaders() },
+      });
+
+      if (response.status === 401) {
+        useAuthStore.getState().logout();
+        window.location.href = '/login';
+        return;
+      }
+
+      await useProjectStore.getState().fetchProjects();
+    } catch (error) {
+      console.error('Failed to delete project:', error);
     }
   },
 }));

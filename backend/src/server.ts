@@ -106,6 +106,86 @@ app.post('/api/projects', authenticateToken, async (req, res) => {
   }
 });
 
+// PUT /api/projects/:id
+// Updates an existing project scoped to the authenticated user's organization
+app.put('/api/projects/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const { title, layer, budget, startDate, endDate } = req.body;
+  const orgId = req.user!.orgId;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const layerMap: Record<string, string> = {
+      'L1': 'L1_DEEP_SEWER',
+      'L2': 'L2_SHALLOW_PIPE',
+      'L3': 'L3_DRY_UTILITY',
+      'L4': 'L4_SURFACE_PAVING',
+      'L5': 'L5_ABOVE_GROUND',
+    };
+    const fullLayer = layer ? layerMap[layer] : null;
+
+    const result = await client.query(
+      `UPDATE projects 
+       SET title = COALESCE($1, title), 
+           utility_layer = COALESCE($2, utility_layer), 
+           budget_allocated = COALESCE($3, budget_allocated), 
+           start_date = COALESCE($4, start_date), 
+           end_date = COALESCE($5, end_date),
+           updated_at = NOW()
+       WHERE id = $6 AND organization_id = $7
+       RETURNING *`,
+      [title, fullLayer, budget, startDate, endDate, id, orgId]
+    );
+
+    if (result.rowCount === 0) {
+      await client.query('ROLLBACK');
+      res.status(404).json({ error: 'Project not found or unauthorized' });
+      return;
+    }
+
+    // Force an update on the geometry to re-trigger the clash detection
+    await client.query(
+      `UPDATE project_geometries SET geom = geom WHERE project_id = $1`,
+      [id]
+    );
+
+    await client.query('COMMIT');
+    res.json({ message: 'Project updated and spatial triggers re-fired.' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update project' });
+  } finally {
+    client.release();
+  }
+});
+
+// DELETE /api/projects/:id
+// Deletes a project scoped to the authenticated user's organization
+app.delete('/api/projects/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const orgId = req.user!.orgId;
+
+  try {
+    const result = await pool.query(
+      'DELETE FROM projects WHERE id = $1 AND organization_id = $2 RETURNING id',
+      [id, orgId]
+    );
+    
+    if (result.rowCount === 0) {
+      res.status(404).json({ error: 'Project not found or unauthorized' });
+      return;
+    }
+
+    res.json({ message: 'Project deleted successfully.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete project' });
+  }
+});
+
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`🚀 API Server running on http://localhost:${PORT}`);
